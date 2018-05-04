@@ -1,0 +1,762 @@
+#############################################################################################################################
+#                                                   Manual updates                                                          # #############################################################################################################################
+# After user signup - So users can continue with login                                                                      #
+#---------------------------------------------------------------------------------------------------------------------------#
+#                                                                                                                           #
+# 1) userlogin --> lguserstatus are to be inserted at the time of activating the user                                       #
+# Example : update userlogin set lgusername = 'natrayan p', lguserstatus='A' WHERE lguserid='BfulXOzj3ibSPSBDVgzMEAF1gax1'  #
+# and lgentityid='IN';                                                                                                      #
+#                                                                                                                           #
+# 2) uccclientmaster --> CLIENTAPPNAME1,CLIENTAPPNAME2,CLIENTAPPNAME3 are to be inserted at the time of activating the user #
+#    update uccclientmaster set CLIENTAPPNAME1 = 'natrayan p' WHERE ucclguserid = 'BfulXOzj3ibSPSBDVgzMEAF1gax1'            #
+#        and uccentityid = 'IN';                                                                                            #
+#                                                                                                                           #
+# 3) fatcamaster --> INV_NAME  are to be inserted at the time of activating the user                                        #
+#    update fatcamaster set inv_name = 'natrayan p' WHERE fatcalguserid = 'BfulXOzj3ibSPSBDVgzMEAF1gax1'                    #
+#         and fatcaentityid = 'IN';                                                                                         #
+#                                                                                                                           #
+# 4) AFter user completes UCC & FATCA UPLOAD complete.  AOF file to be downloaded and entry to be made in to the table.     #
+#   INSERT INTO fileuploadmaster (fupllguserid,fuplfilecat,fuplfiletype,fuplfilename,fuplfiles3bucket,fuplfiles3key,        #
+#   fuplfilesubmitstaus,fuploctime,fupllmtime,fuplentityid) VALUES ('BfulXOzj3ibSPSBDVgzMEAF1gax1','U','AOF',               #
+#    'BfulXOzj3ibSPSBDVgzMEAF1gax1INAOF.tiff','zappa-44lyjdddx','BfulXOzj3ibSPSBDVgzMEAF1gax1INAOF.tiff','I',               #
+#     CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,'IN');                                                                            #
+#                                                                                                                           #
+#############################################################################################################################
+payload = {"UserId":"1712301","MemberId":"17123","Password":"@654321"}
+
+r = requests.post("http://tempuri.org/IStarMFFileUploadService/JsonData", data=payload)
+print(r.text)
+
+-- schema for the application
+
+CREATE SCHEMA webapp
+
+---Secret key detail table
+
+
+CREATE TABLE webapp.secrettkn (
+	secretcode 		    varchar(100) NOT NULL CONSTRAINT secretcode PRIMARY KEY, 
+    seccdid 		    varchar(30) NOT NULL,  --> DDMMYYYYHHMMSS
+    secoctime			timestamp NOT NULL,
+    entityid            varchar(10) NOT NULL
+    );
+    
+    
+create table webapp.BANKIFSCMASTER
+(
+        bank       varchar(80)  NOT NULL,
+        ifsc     varchar(11)  NOT NULL,
+        micr        varchar(9),
+        branch      varchar(100) NOT NULL,
+        address     varchar(250) NOT NULL,
+        contact     varchar(15),
+        city        varchar(80) NOT NULL,
+        district     varchar(80) ,
+        state       varchar(50) not null,
+        entityid            varchar(10) NOT NULL
+    
+);
+
+\copy mytable [ ( column_list ) ] FROM '/path/to/csv/file' WITH CSV HEADER
+    
+
+    ---Login user details
+CREATE TABLE webapp.userlogin (
+	lguserid 		           varchar(100) NOT NULL CONSTRAINT userid PRIMARY KEY, 
+	lgusername    		       varchar(100),
+    lgsinupusername    		   varchar(100) NOT NULL,
+    lgsinupadhaar              varchar(30) NOT NULL,
+    lgsinuppan                 varchar(10) NOT NULL,
+    lgsinupmobile              varchar(15) NOT NULL,
+    lgsinupemail               varchar(100) NOT NULL,
+    lgclientcode               text,
+    lgmembercode               text;
+    lgusertype			       varchar(2) NOT NULL, --> (R - Read only, W- Write)
+    lguserstatus		       varchar(2) NOT NULL, --> (S-Signup complted, R-Registration in progress, U-Registration done image upload pending,
+                                                    --> P - Registration and upload done waiting to be active, A- Active, B-Blocked , I-Deleteduser)
+    lguserkycstatus            varchar(1) NOT NULL DEFAULT 'N',    
+    lguseripaddress            varchar(25),
+    lguserstatusupdt	       timestamptz NOT NULL,
+    lguserlastlogin            timestamptz,
+    lgusercurrentlogin         timestamptz ,
+    lguserlogouttime           timestamptz ,
+    lgoctime			       timestamptz NOT NULL,
+    lglmtime			       timestamptz NOT NULL,
+    lgentityid                 varchar(10) NOT NULL
+    );
+    
+    
+    
+--Notification master
+
+create table webapp.notifimaster(
+    nfmid               varchar(20) NOT NULL CONSTRAINT nfmid PRIMARY KEY , 
+    nfname				varchar(30) NOT NULL,   --- this is can't unique as this will have entries for multiple users with same status
+    nfmuserid 		    varchar(100),
+    nfmscreenid			varchar(10),
+    nfmessage			varchar(1000) NOT NULL,
+    nfmsgtype			varchar(15) NOT NULL,
+    nfmprocessscope      varchar(1) NOT NULL,  --DAY-D, SESSION-S, EVERYPAGE REFERESH-P
+    nfmnxtact			varchar(1) NOT NULL, --Yes or no
+    nfmnxtactmsg		varchar(100),
+    nfmnxtactnavtyp		varchar(10) NOT NULL,
+    nfmnxtactnavdest		varchar(30) NOT NULL,
+    nfmstartdt			timestamp NOT null,
+    nfmenddt				timestamp,
+    nfmoctime			timestamp NOT NULL,
+	nfmlmtime			timestamp NOT NULL,
+	nfmentityid          varchar(10) NOT NULL
+)
+
+
+--Notification for loged in users table
+
+create table webapp.notifiuser(
+	nfuuserid 		    varchar(100) NOT NULL, 
+	nfuname             varchar(30) NOT NULL,  --- this is can't unique as this will have entries for multiple users with same status
+    nfumid              varchar(20) NOT NULL, 
+    nfuscreenid			varchar(10),
+    nfumessage			varchar(1000) NOT NULL,
+    nfumsgtype			varchar(15) NOT NULL,
+    nfprocessscope      varchar(1) NOT NULL,  --DAY-D, SESSION-S, EVERYPAGE REFERESH-P
+    nfuhvnxtact			varchar(1) NOT NULL, --Yes or no
+    nfunxtactmsg		varchar(100),
+    nfunxtactnavtyp		varchar(10),
+    nfunxtactnavdest		varchar(30),
+    nfustatus			varchar(1) NOT NULL, --P -pending or C - completed
+    nfulazyldid		varchar(15),
+    nfulazyldidstatus	varchar(1),    ---N - Not sent or S - Already sent
+    nfuprocesbypgldsvc        varchar(1), ---Y for the day and session that are to be processed by pageload notiprocessing service
+    nfutodayshowncount		integer,
+    nfuoctime			timestamp NOT NULL,
+	nfulmtime			timestamp NOT NULL,
+	nfuentityid          varchar(10) NOT NULL
+);
+
+
+------- Client master table
+
+    ---- CLIENTCODE sequence number (client code created during user creation)
+        CREATE SEQUENCE webapp.ucc_clientcode_seq 
+            START 1
+            increment 1
+            MAXVALUE 999999999;
+            
+create table webapp.uccclientmaster(
+ucclguserid       varchar(100) NOT NULL CONSTRAINT uccuserid PRIMARY KEY, 
+clientcode      Varchar(10),
+clientholding      Varchar(2) ,
+clienttaxstatus      Varchar(2) ,
+clientoccupationCODE      Varchar(2) ,
+clientappname1      Varchar(70) ,
+clientappname2      Varchar(35) ,
+clientappname3      Varchar(35) ,
+clientdob      date,
+clientgender      Varchar(2) ,
+clientguardian      Varchar(35) ,
+clientpan      varchar(10) ,
+clientnominee      Varchar(35) ,
+clientnomineerelATION      Varchar(20) ,
+clientnomineedob    Date,
+clientnomineeaddress    Varchar(40),
+clientguardianpaN      Varchar(10) ,
+clienttype      Varchar(1) ,
+clientdefaultdp      Varchar(4) ,
+clientcdsldpid      Varchar(8) ,
+clientcdslcltid      Varchar(16) ,
+clientnsdldpid      Varchar(8) ,
+clientnsdlcltid      Varchar(8) ,
+clientacctype1      Varchar(2) ,
+clientaccno1      Varchar(16) ,
+clientmicrno1      Varchar(9) ,
+clientifsccode1      Varchar(11) ,
+defaultbankflag1      Varchar(1) ,
+clientacctype2      Varchar(2) ,
+clientaccno2      Varchar(16) ,
+clientmicrno2      Varchar(9) ,
+clientifsccode2      Varchar(11) ,
+defaultbankflag2      Varchar(1) ,
+clientacctype3      Varchar(2) ,
+clientaccno3      Varchar(16) ,
+clientmicrno3      Varchar(9) ,
+clientifsccode3      Varchar(11) ,
+defaultbankflag3      Varchar(1) ,
+clientacctype4      Varchar(2) ,
+clientaccno4      Varchar(16) ,
+clientmicrno4      Varchar(9) ,
+clientifsccode4      Varchar(11) ,
+defaultbankflag4      Varchar(1) ,
+clientacctype5      Varchar(2) ,
+clientaccno5      Varchar(16) ,
+clientmicrno5      Varchar(9) ,
+clientifsccode5      Varchar(11) ,
+defaultbankflag5      Varchar(1) ,
+clientchequename5      Varchar(35) ,
+clientadd1      Varchar(40) ,
+clientadd2      Varchar(40) ,
+clientadd3      Varchar(40) ,
+clientcity      Varchar(35) ,
+clientstate      Varchar(2) ,
+clientpincode      Varchar(6) ,
+clientcountry      Varchar(35) ,
+clientresiphone      Varchar(15) ,
+clientresifax      Varchar(15) ,
+clientofficephonE      Varchar(15) ,
+clientofficefax      Varchar(15) ,
+clientemail      Varchar(50) ,
+clientcommmode      Varchar(1) ,
+clientdivpaymode      Varchar(2) ,
+clientpan2      Varchar(10) ,
+clientpan3      Varchar(10) ,
+mapinno      varchar(15) ,
+cm_foradd1      Varchar(40) ,
+cm_foradd2      Varchar(40) ,
+cm_foradd3      Varchar(40) ,
+cm_forcity      Varchar(35) ,
+cm_forpincode      Varchar(10) ,
+cm_forstate      Varchar(35) ,
+cm_forcountry      Varchar(3) ,
+cm_forresiphone      Varchar(15) ,
+cm_forresifax      Varchar(15) ,
+cm_foroffphone      Varchar(15) ,
+cm_forofffax      Varchar(15) ,
+cm_mobile      varchar(10),
+uccoctime   timestamp NOT NULL,
+ucclmtime   timestamp NOT NULL,
+uccentityid            varchar(10) NOT NULL
+);
+
+
+
+---- FATCA UPLOAD
+CREATE TABLE webapp.fatcamaster(
+fatcalguserid       varchar(100) NOT NULL CONSTRAINT fatcalguserid PRIMARY KEY, 
+pan_rp     varchar(10) ,
+pekrn     varchar(10) ,
+inv_name     varchar(70) ,
+dob     date ,
+fr_name     varchar(70) ,
+sp_name     varchar(70) ,
+tax_status     varchar(3) ,
+data_src     varchar(3) ,
+addr_type     varchar(1) ,
+po_bir_inc     varchar(60) ,
+co_bir_inc     varchar(50) ,
+tax_res1     varchar(50) ,
+tpin1     varchar(20) ,
+id1_type     varchar(1) ,
+tax_res2     varchar(50) ,
+tpin2     varchar(20) ,
+id2_type     varchar(1) ,
+tax_res3     varchar(50) ,
+tpin3     varchar(20) ,
+id3_type     varchar(1) ,
+tax_res4     varchar(50) ,
+tpin4     varchar(20) ,
+id4_type     varchar(1) ,
+srce_wealt     varchar(3) ,
+corp_servs     varchar(2) ,
+inc_slab     varchar(5) ,
+net_worth     numeric(19,2) ,
+nw_date     date ,
+pep_flag     varchar(2) ,
+occ_code     varchar(2) ,
+occ_type     varchar(1) ,
+exemp_code     varchar(2) ,
+ffi_drnfe     varchar(20) ,
+giin_no     varchar(19) ,
+spr_entity     varchar(60) ,
+giin_na     varchar(3) ,
+giin_exemc     varchar(2) ,
+nffe_catg     varchar(3) ,
+act_nfe_sc     varchar(3) ,
+nature_bus     varchar(30) ,
+rel_listed     varchar(70) ,
+exch_name     varchar(2) ,
+ubo_appl     varchar(2) ,
+ubo_count     varchar(3) ,
+ubo_name     varchar(70) ,
+ubo_pan     varchar(10) ,
+ubo_nation     varchar(3) ,
+ubo_add1     varchar(50) ,
+ubo_add2     varchar(50) ,
+ubo_add3     varchar(50) ,
+ubo_city     varchar(50) ,
+ubo_pin     varchar(6) ,
+ubo_state     varchar(3) ,
+ubo_cntry     varchar(4) ,
+ ubo_add_ty     Varchar(2) ,
+ ubo_ctr     varchar(4) ,
+ubo_tin     varchar(20) ,
+ubo_id_ty     varchar(2) ,
+ubo_cob     varchar(30) ,
+ubo_dob     date ,
+ubo_gender     varchar(1) ,
+ubo_fr_nam     varchar(50) ,
+ubo_occ     varchar(2) ,
+ubo_occ_ty     varchar(2) ,
+ubo_tel     varchar(12) ,
+ubo_mobile     varchar(12) ,                                                                           time
+ubo_code     varchar(3) ,
+ubo_hol_pc     varchar(3) ,
+sdf_flag     varchar(2) ,
+ubo_df     varchar(2) ,
+aadhaar_rp     varchar(30) ,
+new_change     varchar(2) ,
+log_name     varchar(30) ,
+filler1     varchar(30) ,
+filler2     varchar(30) ,
+fatcaoctime   timestamp NOT NULL,
+fatcalmtime   timestamp NOT NULL,
+fatcaentityid            varchar(10) NOT NULL,
+);
+
+
+
+CREATE TABLE webapp.fileuploadmaster(
+fupllguserid                text NOT NULL REFERENCES userlogin(lguserid),
+fuplfilecat                 text NOT NULL,                                          -- U -users download, E - to exchnage
+fuplfiletype                text NOT NULL,
+fuplfilename                text NOT NULL,
+fuplfilenametoex            text CONSTRAINT exfilenamechk CHECK (char_length(fuplfilenametoex) <= 10),           --filename sent to exchange
+fuplfiles3bucket            text NOT NULL,
+fuplfiles3key               text NOT NULL,
+fuplfilesubmitstaus         text NOT NULL,                                          -- I-in progress, S - Submitted to Exchange
+fuploctime                  timestamptz NOT NULL,
+fupllmtime                  timestamptz NOT NULL,
+fuplentityid                varchar(10) NOT NULL
+);
+
+amcmaster table
+    ---- fndnatcode sequence number
+        CREATE SEQUENCE webapp.amc_code_seq 
+            START 1
+            increment 1
+            MAXVALUE 9999999;
+
+CREATE TABLE webapp.amcmaster(
+amcnatcode                  varchar(10) NOT NULL DEFAULT 'AMC'||cast((nextval('webapp."amc_code_seq"')) AS TEXT) CONSTRAINT amccode PRIMARY KEY,
+amccodefrmbse               text NOT NULL UNIQUE,
+amcdisplayname              text NOT NULL,
+amcnamefrmbse               text NOT NULL,
+amcactivflg                 boolean NOT NULL,
+amcnotactivefrom            timestamptz,
+amcloctime                  timestamptz NOT NULL,
+amcllmtime                  timestamptz NOT NULL
+entityid                    varchar(10) NOT NULL
+);
+
+
+Fundmaster table
+    ---- fndnatcode sequence number
+        CREATE SEQUENCE webapp.fund_code_seq 
+            START 1
+            increment 1
+            MAXVALUE 999999999;
+            
+CREATE TABLE webapp.fundmaster(
+fndnatcode                  varchar(12) NOT NULL DEFAULT 'FNC'||cast((nextval('webapp."fund_code_seq"')) AS TEXT) CONSTRAINT fndnatcode PRIMARY KEY, 
+fndunqnofrmbse              text NOT NULL,
+fndschcdfrmbse              text NOT NULL UNIQUE,
+fndrtaschcdfrmbse           text NOT NULL,
+fndamcschcdfrmbse           text NOT NULL,
+fndisinfrmbse               text NOT NULL,
+fndamficode                 text NOT NULL,
+fndamcnatcode               varchar(10) REFERENCES webapp.amcmaster(amcnatcode),
+fnddisplayname              text NOT NULL,
+fndnamefrmbse               text NOT NULL,
+fndschtypefrmbse            text NOT NULL,
+fndschplanfrmbse            text NOT NULL,
+fndstartdt                  date NOT NULL,
+fndnotactivefrom            timestamptz,
+fnddivreinvallowed          boolean NOT NULL,
+fndsipallowed               boolean NOT NULL,
+fndisnfo                    boolean NOT NULL,
+fndnfostartdt               date,
+fndnfoenddt                 date,
+fndsetlmnttyp               text NOT NULL,  ---exclude LO & L1... L0,L1,MF(NFO),T1-T8 NOT REQUIRED ONLY T1-T8 is updated here
+fndpurallowed               boolean NOT NULL,
+fndredallowed               boolean NOT NULL,
+fndstpflg                   boolean NOT NULL,
+fndswpflg                   boolean NOT NULL,
+fndswitchflg                boolean NOT NULL,
+fndpurmode                  text NOT NULL,
+fndminpuramt                numeric(19,2) NOT NULL,
+fndaddpuramt                numeric(19,2) NOT NULL,
+fndmaxpuramt                numeric(19,2) NOT NULL,
+fndpuramtinmulti            numeric(19,2) NOT NULL,
+fndpurcutoff                time NOT NULL,
+fndredmode                  text NOT NULL,
+fndminredqty                numeric(19,2) NOT NULL,
+fndmaxredqty                numeric(19,2) NOT NULL,
+fndmulredqty                numeric(19,2) NOT NULL,
+fndminredamt                numeric(19,2) NOT NULL,
+fndmaxredamt                numeric(19,2) NOT NULL,
+fndmulredamt                numeric(19,2) NOT NULL,
+fndredcutoff                time NOT NULL,
+fndrtaagntcd                text,
+fndamcind                   text,
+fndfaceval                  numeric(19,2) NOT NULL,
+fndentryload                numeric NOT NULL,
+fndexitload                 numeric NOT NULL,
+fndloadcomments             text,
+fndlockinprd                numeric,
+fndaum                      numeric(19,4) NOT NULL,
+fndmanager                  text,
+fndloctime                  timestamptz NOT NULL,
+fndllmtime                  timestamptz NOT NULL,
+entityid                    varchar(10) NOT NULL
+);
+
+
+CREATE TABLE webapp.fundsipdt(
+sipfndnatcode               varchar(12) NOT NULL REFERENCES webapp.fundmaster(fndnatcode),
+sipschcodefrmbse            text NOT NULL,
+siptranmode                 text NOT NULL,
+sipfreq                     text NOT NULL,
+sipfreqdates                text NOT NULL,
+sipmingap                   numeric NOT NULL,
+sipmaxgap                   numeric NOT NULL,
+sipinstalgap                numeric NOT NULL,
+sipminamt                   numeric(19,2) NOT NULL,
+sipmaxamt                   numeric(19,2) NOT NULL,
+sipmulamt                   numeric(19,2) NOT NULL,
+sipmininstal                numeric,
+sipmaxinstal                numeric,
+siploctime                  timestamptz NOT NULL,
+sipllmtime                  timestamptz NOT NULL,
+entityid                    varchar(10) NOT NULL
+);
+
+
+
+CREATE TABLE webapp.fundnavcurdt(
+navnatcode                  varchar(12)  NOT NULL REFERENCES webapp.fundmaster(fndnatcode),
+navunqnofrmbse              text NOT NULL,
+navdate                     date NOT NULL,
+navvalue                    numeric(19,4) NOT NULL,
+navloctime                  timestamptz NOT NULL,
+navllmtime                  timestamptz NOT NULL,
+entityid                    varchar(10) NOT NULL
+);
+
+CREATE TABLE fundnavcuryear(
+navnatcode                  text NOT NULL REFERENCES fundmaster(fndnatcode),
+navschcdfrmbse              text NOT NULL,
+navdata                     data NOT NULL,
+navvalue                    numeric(19,3) NOT NULL,
+navloctime                  timestamptz NOT NULL,
+navllmtime                  timestamptz NOT NULL,
+entityid                    varchar(10) NOT NULL
+);
+
+CREATE TABLE fundnavprevyear(
+navnatcode                  text NOT NULL REFERENCES fundmaster(fndnatcode),
+navschcdfrmbse              text NOT NULL,
+navdata                     data NOT NULL,
+navvalue                    numeric(19,3) NOT NULL,
+navloctime                  timestamptz NOT NULL,
+navllmtime                  timestamptz NOT NULL,
+entityid                    varchar(10) NOT NULL
+);
+
+
+CREATE TABLE fundperf(
+fpenatcode                  varchar(12) NOT NULL REFERENCES fundmaster(fndnatcode),
+fndunqnofrmbse              text NOT NULL,
+fpetype                     text NOT NULL, ---annualised,yearly,quaterly,monthly 
+fpeperiod                   text, ---for annualised -> year of perf (2016,2017,etc..), 
+                                           ----Yearly --> 1year,2year,etc...,quaterly --> 20161Q,20162Q,etc..,
+                                           ----monthly -->200601,200602,...,200612
+fpeperfpecent               numeric(3,2) NOT NULL,
+fpeloctime                  timestamptz NOT NULL,
+fpellmtime                  timestamptz NOT NULL,
+entityid                    varchar(10) NOT NULL
+);
+
+
+
+INSERT INTO notifimaster VALUES ('id1','MiqAlrt18sWZ9M3hV8qpdySez2I3','dashboard','User Registration not complete.  Please complete user registration to start transacting','I','Y','','linkbutton','/mfreg',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,'IN');
+
+  889  source natvenv/bin/activate
+  890  gunicorn --reload natrayan:app
+
+    drop table pfstklist;
+    drop table pfmflist;
+    drop table pfmaindetail;
+
+
+CREATE TABLE webapp.pfmaindetail (
+    pfportfolioid 		varchar(50) CONSTRAINT porfolioid PRIMARY KEY, --> use userid+running number
+    pfpfidusrrunno       integer CONSTRAINT positive_price CHECK (pfpfidusrrunno > 0),
+	pfuserid 			varchar(40) NOT NULL,
+    pfportfolioname		varchar(100) NOT NULL,
+    pfpurpose			varchar(600),
+    pfbeneUsers 		varchar(40),
+    pfstartDt			date,
+    pftargetDt			date,
+    pftargetIntRate 	numeric(5,2),
+    pfplannedInvAmt 	numeric(16,5),
+    --pfInvAmtFeq         varchar(15),
+    pfstkamtsplittype   varchar(10),
+    pfmfamtsplittype    varchar(10),    
+    pfshowadcrtbtn      varchar(1), -- Y to show add to card button, BLANK for not to show the button
+    pfoctime			timestamptz NOT NULL,
+    pflmtime			timestamptz NOT NULL,
+    entityid            varchar(10) NOT NULL
+    );
+	    
+    
+    CREATE TABLE webapp.pfmflist(
+    ormflistid          varchar(50)	CONSTRAINT pfmflists PRIMARY KEY, --> use date+running number for that date
+    orportfolioid       varchar(50) REFERENCES webapp.pfmaindetail(pfportfolioid),	
+    orpfuserid 			varchar(40) NOT NULL,
+    ormfseqnum          numeric(5) NOT NULL,
+    ormffundname        varchar(100) NOT NULL,
+    ormffndcode         varchar(100) NOT NULL, 
+    ormfnatamccode      varchar(10) NOT NULL REFERENCES webapp.amcmaster(amcnatcode),
+	ormffndnameedit     varchar(100) NOT NULL, --> edit - in edit mode, noedit --in no edit mode, fixed -no edit + no delete mode(after sip order creation)
+	ormfdathold         text,	
+    ormfoctime			timestamptz NOT NULL,
+    ormflmtime			timestamptz NOT NULL,
+    entityid            varchar(10) NOT NULL
+	);
+
+
+123456789123
+
+    CREATE TABLE webapp.pfmforlist(
+    orormfpflistid              varchar(50)	CONSTRAINT pfmforlistor PRIMARY KEY, --> use date+running number for that date   
+    orormflistid                varchar(50)	REFERENCES webapp.pfmflist(ormflistid),
+    ororportfolioid             varchar(50) REFERENCES webapp.pfmaindetail(pfportfolioid),
+    uniquereferencenumber       varchar(19) REFERENCES webapp.mforderdetails(mfor_uniquereferencenumber),
+    orpfportfolioname		    varchar(100) NOT NULL,
+    orormfseqnum                numeric(5) NOT NULL,
+    ororpfuserid 			    varchar(40) NOT NULL,
+    orormffundname              varchar(100) NOT NULL,
+    orormffndcode               varchar(100) NOT NULL, 
+    ororfndamcnatcode           varchar(10) NOT NULL REFERENCES webapp.amcmaster(amcnatcode),
+    orormfprodtype              varchar(5) NOT NULL,       --> MF,EQ,IN
+    orormftrantype              varchar(5) NOT NULL,     --> New(N),Mod(M),Cxl(C)
+    orormfwhattran              varchar(5) NOT NULL,     --> Pur (PU),Redem (RE) ,SwiOut(SO) ,SwiIn (SI)
+    ormffundordelstrtyp         varchar(10) NOT NULL,
+    ormffundordelsfreq          varchar(20) NOT NULL,
+    ormffundordelsstdt          varchar NOT NULL,
+	ormffundordelsamt           numeric(16,5) NOT NULL,
+    ormfsipinstal               numeric(3) NOT NULL,
+	ormfsipendt                 date,
+	ormfsipdthold               text,
+    ormfselctedsip              text,    
+    ormffndstatus               varchar(10) NOT NULL, --new - Not executed, INCART - added to order basket, SUBM - Submitted, inprogress -SIP order placment inprogress or cancel in progress, cancel (if > mininst),cancled,completed(expired for SIP)
+    ormfordererr                varchar(1000),
+    ormfoctime			        timestamptz NOT NULL,
+    ormflmtime      			timestamptz NOT NULL,
+    entityid                    varchar(10) NOT NULL
+    );
+    
+    Addition of one foield to catpure transactioncode+buysell (mfnewpurchse or mfnewredemption,etc..) is needed.
+    
+    
+    ------ create a sequence (this is to be reset at 00:00 hrs every day, Lambda function to be written for reset)
+            CREATE SEQUENCE webapp.mfor_id_seq 
+            START 1
+            increment 1
+            MAXVALUE 999999999;
+    
+    
+    CREATE TABLE webapp.mforderdetails(
+    mfor_uniquereferencenumber   varchar(19) NOT NULL DEFAULT '10' || TO_CHAR(CURRENT_TIMESTAMP,'DDMMYYYY')||cast((nextval('webapp."mfor_id_seq"')) AS TEXT) CONSTRAINT mfor_unq_ref PRIMARY KEY, 
+                                 --> <PROUDCT (2digit, 10-MF,20-EQ, 30-IN)><DDMMYYYY(8digit)><sequence(9digit)>
+    mfor_pfuserid 			     varchar(40) NOT NULL,
+    mfor_prodcuttype             varchar(3)  NOT NULL, --> MF-mutual fund, EQ-stock, IN-insurance
+    mfor_orormfpflistid          varchar(50) NOT NULL REFERENCES webapp.pfmforlist(orormfpflistid),
+    mfor_ororportfolioid         varchar(50) NOT NULL REFERENCES webapp.pfmaindetail(pfportfolioid),
+    mfor_transactioncode         varchar(3) NOT NULL,    -->  Allowed values (onetime -> NEW/MOD/CXL : <all>SIP -> NEW/CXL  : OVERNIGHT-> NEW/CXL : SWITCH-> NEW/CXL )
+    mfor_ordertype               varchar(10) NOT NULL,   -->  ONE-TIME,SIP,XSIP,ISIP,ESIP/OVERNIGHT/SWITCH
+    mfor_buysell                 varchar(2) NOT NULL,    -->  P/R/SO/SI (Pruchar/Redemption/switchout/switchin)
+    mfor_buyselltype             varchar(10),   -->  FRESH/ADDITIONAL
+    mfor_orderid                 varchar(8),
+    mfor_orderstatus             varchar(10),            -->  processnotstarted(PNS), (VAS VAF) Validation succ or failure ,inprocess for sip (INP),pendpay for one (PPY) ,paycomp, processed, failed (FAI)
+    mfor_transmode               varchar(2) NOT NULL,     --> D/P   check if this field is mandatory
+    mfor_dptxn                   varchar(10) NOT NULL,    --> C/N/P  (CDSL/NSDL/PHYSICAL)
+    mfor_userid                  integer,
+    mfor_memberid                varchar(20),
+    mfor_clientcode              varchar(20) NOT NULL,
+    mfor_schemecd                varchar(20) NOT NULL,
+    mfor_toschemecd              varchar(20) ,
+    mfor_RedeemDate              date,
+    mfor_amount                  numeric(19,2),
+    mfor_qty                     numeric(19,2),
+    mfor_allredeem               varchar(1),
+    mfor_minredemption           varchar(1),     --> Y/N
+    mfor_foliono                 varchar(20),
+    mfor_remarks                 varchar(100),
+    mfor_kycstatus               varchar(1),            
+    mfor_internalrefnum          varchar(10),    
+    mfor_euin                    varchar(20) NOT NULL,
+    mfor_euinflag                varchar(1)  NOT NULL,    --> Y/N    
+    mfor_dpc                     varchar(1) NOT NULL,     --> Y/N
+    mfor_ipadd                   varchar(20),
+    mfor_subbrcode               varchar(15),
+    mfor_subbrokerarn            varchar(20),    
+    mfor_sipstartdate            varchar,
+    mfor_sipenddate              date,
+    mfor_freqencytype            varchar(20),            --> Monthly/daily
+    mfor_frequencyallowed        smallint DEFAULT 1,
+    mfor_numofinstallment        smallint,
+    mfor_firstorderflg           varchar(1),
+    mfor_sipregid                varchar(10),
+    mfor_brokerage               numeric(19,2),
+    mfor_sipmandateid            varchar(15),              --> xsipmandateid varchar(8),  isipmandateid  varchar(15)
+    mfor_valierrors              text,
+    mfor_bseremarks              text,
+    mfor_msgjson                 json,
+    mfor_orderoctime			timestamptz NOT NULL,
+    mfor_orderlmtime      		timestamptz NOT NULL,    
+    mfor_entityid                varchar(10) NOT NULL
+    );
+    
+    
+    
+    
+    ---Table that stores the folio id for the funds under AMC IN a portfolio
+    
+          
+    CREATE TABLE webapp.mffoliodetails(
+    fopfportfolioid        varchar(50) REFERENCES webapp.pfmaindetail(pfportfolioid),	
+    foamcnatcode           varchar(10) REFERENCES webapp.amcmaster(amcnatcode),
+    fopfamcfolionumber       varchar(50) NOT NULL,
+    foorderoctime		   timestamptz NOT NULL,
+    foorderlmtime      	   timestamptz NOT NULL,
+    foentityid               varchar(10) NOT NULL
+    )
+    
+    
+    
+    
+    
+    
+    SELECT clientcode FROM webapp.uccclientmaster WHERE ucclguserid = %s AND uccentityid = %s,(userid,entityid,)
+SELECT lguserkycstatus FROM webapp.userlogin WHERE lguserid = %s AND lgentityid = %s,(userid,entityid,)
+
+
+
+--One time
+INSERT INTO webapp.mforderdetails(mfor_prodcuttype,mfor_orormfpflistid,mfor_transactioncode,mfor_ordertype,mfor_buysell,mfor_orderstatus,mfor_transmode,mfor_dptxn,mfor_userid,mfor_clientcode,mfor_schemecd,
+								mfor_amount,mfor_foliono,mfor_kycstatus,mfor_euin,mfor_euinflag,mfor_dpc,mfor_ipadd,mfor_orderoctime,mfor_orderlmtime,mfor_entityid)
+SELECT orormfprodtype,orormfpflistid,orormftrantype,ormffundordelstrtyp,orormfwhattran,'R','P','P',ororpfuserid,<clientcode>,orormffndcode,
+								ormffundordelsamt,<foliono>,<kycstatus>,'','N','N',<ipaddress>,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,entityid from webapp.pfmforlist
+								where ororpfuserid = %s AND entityid = %s AND ormffndstatus = 'INCART' AND ormffundordelstrtyp = 'One Time';
+    
+    
+    
+    
+    
+--SIP time
+INSERT INTO webapp.mforderdetails(mfor_prodcuttype,mfor_orormfpflistid,mfor_transactioncode,mfor_ordertype,mfor_buysell,mfor_orderstatus,mfor_transmode,mfor_dptxn,mfor_userid,mfor_clientcode,mfor_schemecd,
+								mfor_amount,mfor_kycstatus,mfor_euin,mfor_euinflag,mfor_dpc,mfor_ipadd,mfor_sipstartdate,mfor_freqencytype,mfor_numofinstallment,mfor_foliono
+								mfor_orderoctime,mfor_orderlmtime,mfor_entityid)
+SELECT orormfprodtype,orormfpflistid,orormftrantype,ormffundordelstrtyp,orormfwhattran,'R','P','P',ororpfuserid,B.clientcode,orormffndcode,
+								ormffundordelsamt,C.lguserkycstatus,'','N','N',C.lguseripaddress,ormffundordelsstdt,ormffundordelsfreq,ormfsipinstal,D.fopfamcfolionumber
+								CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,entityid from webapp.pfmforlist A
+								LEFT OUTER JOIN webapp.uccclientmaster B ON (A.ororpfuserid = B.ucclguserid AND A.entityid = B.uccentityid)
+								LEFT OUTER JOIN webapp.userlogin C ON (A.ororpfuserid = C.lguserid AND A.entityid = C.lgentityid)
+								LEFT OUTER JOIN webapp.pfmforlist D ON (A.ororfndamcnatcode = D.fol_amcnatcode AND A.entityid = D.entityid)
+								where ororpfuserid = 'BfulXOzj3ibSPSBDVgzMEAF1gax1' AND entityid = 'IN' AND ormffndstatus = 'INCART' AND ormffundordelstrtyp = 'SIP';
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    INSERT INTO pfmaindetail
+(pfPortfolioid,pfpfidusrrunno,pfuserid,pfPortfolioname,pfPurpose,pfBeneUsers,pfStartDt,pfTargetDt,pfTargetIntRate,pfPlannedInvAmt,pfInvAmtFeq,pfStkAmtsplittype,pfmfAmtsplittype,pfoctime,pflmtime)
+VALUES
+('AB00121',1,'AB0012','NATRAYAN RETIRMENT','To Save for Retairment','','31-oct-2017','30-nov-2017',8.5,10000,'Daily','Amount','%','31-oct-2017','31-oct-2017'),
+('AB00122',2,'AB0012','ANANTHI RETIRMENT','To Save for ANA Retairment','','15-nov-2017','30-nov-2020',9.5,1200,'Mothly','%','Amount','31-oct-2017','31-oct-2017')
+;
+
+INSERT INTO pfstklist
+(pfstklistid,pfPortfolioid,pfstExchange,pfstTradingsymbl,pfstAmt,pfstPercent,pfstAllotedAmt,pfstTotUnit,pfstoctime,pfstlmtime)
+VALUES
+(1,'AB00121','NSE','ITC',3000,0,3000,20,'31-oct-2017','31-oct-2017'),
+(2,'AB00121','NSE','SBI',3500,0,3500,10,'31-oct-2017','31-oct-2017'),
+(3,'AB00122','NSE','TATA',0,40,480,1,'31-oct-2017','31-oct-2017');
+
+INSERT INTO pfmflist
+(pfmflistid,pfPortfolioid,pfmfFundname,pfmfAmt,pfmfPercent,pfmfAllotedAmt,pfmfoctime,pfmflmtime)
+VALUES
+(1,'AB00121','BIRLA MNC',0,20,2000,'31-oct-2017','31-oct-2017'),
+(2,'AB00121','ICICI PRU',0,15,1500,'31-oct-2017','31-oct-2017'),
+(3,'AB00122','QUANTUM EQU',720,0,720,'31-oct-2017','31-oct-2017');
+
+
+
+INSERT INTO userlogin
+(lguserid,lgusername,lgusertype,lgoctime,lglmtimE)
+VALUES
+('MiqAlrt18sWZ9M3hV8qpdySez2I3','Natrayan Palani Appan','Natrayan Palani Appan','12345658655','ABCD4564K','1234568954','W','R',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
+            
+
+         
+          
+          
+INSERT INTO secrettkn
+(secretcode,seccdid,secoctime)
+VALUES
+('secret','23122017000254','23-dec-2017')
+
+
+  
+    INSERT INTO pfmaindetail
+(pfPortfolioid,pfpfidusrrunno,pfuserid,pfPortfolioname,pfPurpose,pfBeneUsers,pfStartDt,pfTargetDt,pfTargetIntRate,pfPlannedInvAmt,pfInvAmtFeq,pfStkAmtsplittype,pfmfAmtsplittype,pfoctime,pflmtime)
+VALUES
+('AB00131',1,'AB0013','NATRAYAN RETIRMENT cpy','To Save for Retairment','','31-oct-2017','30-nov-2017',8.5,10000,'Daily','Amount','%','31-oct-2017','31-oct-2017')
+;
+
+
+delete from pfstklist;
+delete from pfmflist;
+delete from pfmaindetail;
+
+
+SELECT
+ *
+FROM
+ pg_catalog.pg_tables
+WHERE
+ schemaname = 'public'
+
+ 
+ 
+    drop table aloclist;
+ 
+    CREATE TABLE aloclist (
+    pfportfolioid 		varchar(50) REFERENCES pfmaindetail(pfPortfolioid) UNIQUE,	    
+    pfportfolioname		varchar(100) NOT NULL,
+    alocpfallocated     numeric(16,5) NOT NULL,
+    alocpfusedtoday     numeric(16,5) NOT NULL,
+    alocpfnewallocated  numeric(16,5) NOT NULL DEFAULT 0.0,
+    alocpftotal         numeric(16,5) NOT NULL DEFAULT 0.0,
+    alocpflastupdt      date NOT NULL,
+    alococtime			timestamp NOT NULL,
+    aloclmtime			timestamp NOT NULL
+    );
+
+    
+                    
+UPDATE ALOCLIST SET alocpfusedtoday = 10,
+					alocpflastupdt = CURRENT_DATE-1,
+                    alocpfallocated = 0
+                    where pfportfolioid='AB00121';
+                    
+UPDATE ALOCLIST SET alocpfusedtoday = 15,
+					alocpflastupdt = CURRENT_DATE-1,
+                    alocpfallocated = 0
+                    where pfportfolioid='AB00122';
+
+                    

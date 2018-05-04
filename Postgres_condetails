@@ -1,0 +1,115 @@
+Initial container creation:
+docker run -d --name my_postgres1 -e POSTGRES_PASSWORD=mysecretpassword -p 5432:5432 -v pg-data:/home/natrayan/project/AwsProject/databases/postrgreslk postgres:alpine
+
+
+Current run
+sudo systemctl start docker
+
+
+
+#to connect to postgres using pgadmin4
+#### first time run ####
+docker run -v pg-data:/home/natrayan/project/AwsProject/databases/postrgreslk -p 5432:5432 --name postgres-test -e POSTGRES_PASSWORD=password123 -d postgres
+#### first time run ####
+docker start postgres-test
+docker run -v pgadmin4:/home/pgadmin/.pgadmin -p 80:80 --link postgres-test:postgres-test -e 'PGADMIN_DEFAULT_EMAIL=user@domain.com' -e 'PGADMIN_DEFAULT_PASSWORD=SuperSecret' --rm dpage/pgadmin4
+
+http://localhost:80
+In pagadmin4
+Host : postgres-test
+password : password123
+
+#to connect to postgres using psql
+docker run -it --rm --link postgres-test:postgres-test postgres psql -h postgres-test -U postgres 
+password is = mysecretpassword
+
+# simple example to fetch records using psycopg2 from postgres
+import psycopg2
+import sys
+
+conn_string = "host='localhost' dbname='postgres' user='postgres' password='password123'"
+con=psycopg2.connect(conn_string)
+cur = con.cursor()
+cur.execute("SELECT * FROM pfmaindetail")
+records = cur.fetchall()
+print(records)
+
+
+ssh -N -L 5433:mysb.cygdhnb2k7oe.ap-southeast-1.rds.amazonaws.com:5432 -i "natraya.pem" ec2-user@ec2-13-250-132-133.ap-southeast-1.compute.amazonaws.com
+
+#SAMPLE table creation
+CREATE TABLE role(
+ role_id serial PRIMARY KEY,
+ role_name VARCHAR (255) UNIQUE NOT NULL
+);
+
+INSERT INTO table(role_id, role_name)
+VALUES
+ (1, 'natrayan');
+ 
+ 
+ url = url.format('postgres', 'password123', 'localhost', '5432', 'postgres') 
+ con, meta = connect('postgres', 'password123', 'postgres')
+
+ create a filed pfstLtp
+
+ 
+     dict1 = dict(payload)
+    dict2 = dict(payload)
+    print(dict1)
+    print(dict2)
+    
+    
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Commands to delete existing user and recreate for sign up
+update userlogin set lgusername = 'jayakodi p', lguserstatus='R' WHERE lguserid='7sC6tSCGdOeh9EUayFNYkbGYF0g1' and lgentityid='IN';
+update uccclientmaster set CLIENTAPPNAME1 = 'jayakodi p' WHERE ucclguserid = '7sC6tSCGdOeh9EUayFNYkbGYF0g1' and uccentityid = 'IN'; 
+update fatcamaster set inv_name = 'jayakodi p' WHERE fatcalguserid = '7sC6tSCGdOeh9EUayFNYkbGYF0g1' and fatcaentityid = 'IN';
+
+
+delete from userlogin where lguserid ='hPcediYlhrOO6TG8hQDrhIbAjdt2' ;
+delete from notifimaster where nfmuserid='hPcediYlhrOO6TG8hQDrhIbAjdt2' ;
+delete from notifiuser where nfuuserid='hPcediYlhrOO6TG8hQDrhIbAjdt2' ;
+delete from uccclientmaster WHERE ucclguserid = 'hPcediYlhrOO6TG8hQDrhIbAjdt2' and uccentityid = 'IN'; 
+delete from fatcamaster WHERE fatcalguserid = 'L4DSagXm7jcQZlGowSyXZjYSZur1' and fatcaentityid = 'IN';
+
+
+fupllguserid,fuplfilecat,fuplfiletype,fuplfilename,fuplfiles3bucket,fuplfiles3key,fuplfilesubmitstaus,fuploctime,fupllmtime,fuplentityid
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    
+INSERT INTO secrettkn (secretcode,seccdid,secoctime,entityid) VALUES ('secret',current_timestamp,current_timestamp,'IN');
+
+INSERT INTO userlogin  (lguserid,lgusername,lgsinupusername, lgsinupadhaar, lgsinuppan, lgsinupmobile, lgsinupemail, lgusertype,lguserstatus,lguserstatusupdt,lguserlastlogin, lgusercurrentlogin,lguserlogouttime,lgoctime,lglmtime,lgentityid)
+VALUES ('BfulXOzj3ibSPSBDVgzMEAF1gax1','natrayan p','TESTUSER','123456789012','1234567890','1234567890','natrayanp@gmail.com','W','U','2017-12-31 19:02:08.156947','2018-01-02 14:06:16.937399','2018-01-02 14:09:14.885269',NULL,'2017-12-31 19:02:08.156947','2017-12-31 19:02:08.156947','IN');
+
+INSERT INTO userlogin  (lguserid,lgusername,lgsinupusername, lgsinupadhaar, lgsinuppan, lgsinupmobile, lgsinupemail, lgusertype,lguserstatus,lguserstatusupdt,lguserlastlogin, lgusercurrentlogin,lguserlogouttime,lgoctime,lglmtime,lgentityid)
+VALUES ('nrTBkWVPjjXJbKSrzmubcixjgIw1','ananthi k','ananthi','123558689895','ayurn4896n','9522587846','k.ananthi@gmail.com','W','A','2018-01-27 14:33:01.053257',NULL,NULL,NULL,'2018-01-27 14:33:01.053257','2018-01-27 14:33:01.053257','IN');
+
+bank,ifsc,micr,branch,address,contact,city,district,state,entityid
+
+INSERT INTO notifimaster (nfmid,nfname,nfmuserid,nfmscreenid,nfmessage,nfmsgtype,nfmprocessscope,nfmnxtact,nfmnxtactmsg,nfmnxtactnavtyp,nfmnxtactnavdest,nfmstartdt,nfmenddt,nfmoctime,nfmlmtime,nfmentityid)
+VALUES ('20180127223301','pendingregistration','nrTBkWVPjjXJbKSrzmubcixjgIw1','dashboard','please complete user registration','notifaction','P','Y',NULL,'NONE','NONE','2018-01-27 14:33:01.067855',NULL,'2018-01-27 14:33:01.067855','2018-01-27 14:33:01.067855','IN');
+
+
+INSERT INTO uccclientmaster
+(ucclguserid,clientcode,clientholding,clienttaxstatus,clientoccupationCODE,clientappname1,clientappname2,clientappname3,clientdob,clientgender,clientguardian,clientpan,clientnominee,clientnomineerelATION,clientnomineedob,clientnomineeaddress,clientguardianpaN,clienttype,clientdefaultdp,clientcdsldpid,clientcdslcltid,clientnsdldpid,clientnsdlcltid,clientacctype1,clientaccno1,clientmicrno1,clientifsccode1,defaultbankflag1,clientacctype2,clientaccno2,clientmicrno2,clientifsccode2,defaultbankflag2,clientacctype3,clientaccno3,clientmicrno3,clientifsccode3,defaultbankflag3,clientacctype4,clientaccno4,clientmicrno4,clientifsccode4,defaultbankflag4,clientacctype5,clientaccno5,clientmicrno5,clientifsccode5,defaultbankflag5,clientchequename5,clientadd1,clientadd2,clientadd3,clientcity,clientstate,clientpincode,clientcountry,clientresiphone,clientresifax,clientofficephonE,clientofficefax,clientemail,clientcommmode,clientdivpaymode,clientpan2,clientpan3,mapinno,cm_foradd1,cm_foradd2,cm_foradd3,cm_forcity,cm_forpincode,cm_forstate,cm_forcountry,cm_forresiphone,cm_forresifax,cm_foroffphone,cm_forofffax,cm_mobile,uccoctime,ucclmtime,uccentityid)
+VALUES ('BfulXOzj3ibSPSBDVgzMEAF1gax1','A000000001','SI','21','04','natrayan p',NULL,NULL,'2018-01-17','M',NULL,'ABCDE6789Z','ananthi','Mother','2018-01-25','B1F2 PARIS APT 30 LINK ROAD MADUVINKARAI',NULL,'P',NULL,NULL,NULL,NULL,NULL,'SB','123456789123',NULL,'ALLA0212398','Y',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'b3f3 psris atr 43 jikj risd mwdivilari','gjhjdy cujeeai',NULL,'chennai','TN','566896','India',NULL,NULL,NULL,NULL,'natrayanp@gmail.com','M','02',NULL,NULL,NULL,'foreign address one is any address you t','foreign address 2 is what you',NULL,'mycity','526598','mystate','004',NULL,NULL,NULL,NULL,'1234567890','2017-12-31 19:02:08.210046','2018-01-10 21:19:09','IN')
+
+
+INSERT INTO uccclientmaster
+(ucclguserid,clientcode,clientholding,clienttaxstatus,clientoccupationCODE,clientappname1,clientappname2,clientappname3,clientdob,clientgender,clientguardian,clientpan,clientnominee,clientnomineerelATION,clientnomineedob,clientnomineeaddress,clientguardianpaN,clienttype,clientdefaultdp,clientcdsldpid,clientcdslcltid,clientnsdldpid,clientnsdlcltid,clientacctype1,clientaccno1,clientmicrno1,clientifsccode1,defaultbankflag1,clientacctype2,clientaccno2,clientmicrno2,clientifsccode2,defaultbankflag2,clientacctype3,clientaccno3,clientmicrno3,clientifsccode3,defaultbankflag3,clientacctype4,clientaccno4,clientmicrno4,clientifsccode4,defaultbankflag4,clientacctype5,clientaccno5,clientmicrno5,clientifsccode5,defaultbankflag5,clientchequename5,clientadd1,clientadd2,clientadd3,clientcity,clientstate,clientpincode,clientcountry,clientresiphone,clientresifax,clientofficephonE,clientofficefax,clientemail,clientcommmode,clientdivpaymode,clientpan2,clientpan3,mapinno,cm_foradd1,cm_foradd2,cm_foradd3,cm_forcity,cm_forpincode,cm_forstate,cm_forcountry,cm_forresiphone,cm_forresifax,cm_foroffphone,cm_forofffax,cm_mobile,uccoctime,ucclmtime,uccentityid)
+VALUES ('nrTBkWVPjjXJbKSrzmubcixjgIw1','A000000003',NULL,NULL,NULL,'ananthi k',NULL,NULL,NULL,NULL,NULL,'ayurn4896n',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'k.ananthi@gmail.com',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'9522587846','2018-01-27 14:33:01.07895','2018-01-27 14:33:01.07895','IN')
+
+
+INSERT INTO fatcamaster
+(fatcalguserid,pan_rp,pekrn,inv_name,dob,fr_name,sp_name,tax_status,data_src,addr_type,po_bir_inc,co_bir_inc,tax_res1,tpin1,id1_type,tax_res2,tpin2,id2_type,tax_res3,tpin3,id3_type,tax_res4,tpin4,id4_type,srce_wealt,corp_servs,inc_slab,net_worth,nw_date,pep_flag,occ_code,occ_type,exemp_code,ffi_drnfe,giin_no,spr_entity,giin_na,giin_exemc,nffe_catg,act_nfe_sc,nature_bus,rel_listed,exch_name,ubo_appl,ubo_count,ubo_name,ubo_pan,ubo_nation,ubo_add1,ubo_add2,ubo_add3,ubo_city,ubo_pin,ubo_state,ubo_cntry,ubo_add_ty,ubo_ctr,ubo_tin,ubo_id_ty,ubo_cob,ubo_dob,ubo_gender,ubo_fr_nam,ubo_occ,ubo_occ_ty,ubo_tel,ubo_mobile,ubo_code,ubo_hol_pc,sdf_flag,ubo_df,aadhaar_rp,new_change,log_name,filler1,filler2,fatcaoctime,fatcalmtime,fatcaentityid)
+VALUES ('BfulXOzj3ibSPSBDVgzMEAF1gax1','ABCDE6789Z',NULL,'natrayan p','2018-01-17',NULL,NULL,'21','E','1','placdofbir','Singapore','SG','j45686688','D',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'04',NULL,'33',NULL,NULL,'Y','04','S',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'O','N',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'N','N',NULL,'N','logname.log',NULL,NULL,'2017-12-31 19:02:08.221025','2018-01-10 21:19:09','IN')
+
+
+INSERT INTO fatcamaster
+(fatcalguserid,pan_rp,pekrn,inv_name,dob,fr_name,sp_name,tax_status,data_src,addr_type,po_bir_inc,co_bir_inc,tax_res1,tpin1,id1_type,tax_res2,tpin2,id2_type,tax_res3,tpin3,id3_type,tax_res4,tpin4,id4_type,srce_wealt,corp_servs,inc_slab,net_worth,nw_date,pep_flag,occ_code,occ_type,exemp_code,ffi_drnfe,giin_no,spr_entity,giin_na,giin_exemc,nffe_catg,act_nfe_sc,nature_bus,rel_listed,exch_name,ubo_appl,ubo_count,ubo_name,ubo_pan,ubo_nation,ubo_add1,ubo_add2,ubo_add3,ubo_city,ubo_pin,ubo_state,ubo_cntry,ubo_add_ty,ubo_ctr,ubo_tin,ubo_id_ty,ubo_cob,ubo_dob,ubo_gender,ubo_fr_nam,ubo_occ,ubo_occ_ty,ubo_tel,ubo_mobile,ubo_code,ubo_hol_pc,sdf_flag,ubo_df,aadhaar_rp,new_change,log_name,filler1,filler2,fatcaoctime,fatcalmtime,fatcaentityid)
+VALUES ('nrTBkWVPjjXJbKSrzmubcixjgIw1','ayurn4896n',NULL,'ananthi k',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2018-01-27 14:33:01.090032','2018-01-27 14:33:01.090032','IN')
+
+
+
+psql -h mysb.cygdhnb2k7oe.ap-southeast-1.rds.amazonaws.com -p 5324 -u mysbdb -U natrayan -W Nirudhi1
