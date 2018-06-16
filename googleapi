@@ -1,0 +1,83 @@
+client id
+445101665929-82p4k4uneho5vd9geo8j94skdks2174t.apps.googleusercontent.com
+
+Client Secret
+KYgQ9VHf3BPzCiNCdtJBuwcu
+
+
+sudo vi /etc/sysconfig/selinux
+systemctl stop nginx.service
+systemctl start nginx.service
+sudo vi /etc/nginx/nginx.conf
+
+
+[root]# sudo cat /var/log/audit/audit.log | grep nginx | grep denied | audit2allow -M nginxlocalconf > nginxlocalconf.te
+[root]# cat nginxlocalconf.te 
+
+module nginxlocalconf 1.0;
+
+require {
+    type httpd_t;
+    type var_t;
+    type transproxy_port_t;
+    class tcp_socket name_connect;
+    class file { read getattr open };
+}
+
+#============= httpd_t ==============
+
+#!!!! This avc can be allowed using the boolean 'httpd_can_network_connect'
+allow httpd_t transproxy_port_t:tcp_socket name_connect;
+allow httpd_t var_t:file { read getattr open };
+[root]# sudo cat /var/log/audit/audit.log | grep nginx | grep denied | audit2allow -M nginxlocalconf
+******************** IMPORTANT ***********************
+To make this policy package active, execute:
+
+semodule -i nginxlocalconf.pp
+
+[root]# semodule -i nginxlocalconf.pp
+
+
+chown -R nginx:nginx "/home/natrayan/project/AwsProject/Angular/tradingapp/tradingapp1/dist/tradingapp1dep"
+
+/home/natrayan/project/AwsProject/Angular/tradingapp/tradingapp1/dist/tradingapp1dep
+
+
+
+---
+Deploying in NGNIX
+
+cd /usr/share/nginx/nat
+sudo rm -Rf *
+sudo cp -R /home/natrayan/project/AwsProject/Angular/tradingapp/tradingapp1/dist/tradingapp1/* .
+
+sudo cp -R /home/natrayan/project/AwsProject/Angular/kidapp/kidsapp/dist/kidsapp/* .
+
+
+--------------------
+VNC SERVER
+https://www.server-world.info/en/note?os=Fedora_27&p=desktop&f=8
+https://www.server-world.info/en/note?os=Fedora_27&p=desktop&f=6
+
+
+https://linode.com/docs/applications/remote-desktop/remote-desktop-using-apache-guacamole-on-docker/#initialize-guacamole-authentication-with-mysql
+
+
+GUACAMOLE
+------------------
+
+sudo systemctl start docker
+docker run --name example-guacd -d guacamole/guacd
+docker run --name example-guacamole --link example-guacd:guacd --link postgres-test:postgres -e 'POSTGRES_DATABASE=guacamole_db' -e 'POSTGRES_USER=guacamole_user' -e 'POSTGRES_PASSWORD=guacadmin' -d -p 127.0.0.1:8080:8080 guacamole/guacamole
+
+docker start postgres-test
+docker start example-guacd
+docker start example-guacamole
+vncserver :1 -geometry 1280x1024 -depth 24
+
+http://localhost:8080/guacamole/
+
+cd /home/natrayan/.vnc/
+vncserver -kill :1
+
+netstat -ln | grep 5900
