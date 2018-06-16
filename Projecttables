@@ -27,6 +27,11 @@ payload = {"UserId":"1712301","MemberId":"17123","Password":"@654321"}
 r = requests.post("http://tempuri.org/IStarMFFileUploadService/JsonData", data=payload)
 print(r.text)
 
+$ pip install pip-review
+$ pip-review --local --interactive
+
+
+
 -- schema for the application
 
 CREATE SCHEMA webapp
@@ -72,7 +77,7 @@ CREATE TABLE webapp.userlogin (
     lgclientcode               text,
     lgmembercode               text;
     lgusertype			       varchar(2) NOT NULL, --> (R - Read only, W- Write)
-    lguserstatus		       varchar(2) NOT NULL, --> (S-Signup complted, R-Registration in progress, U-Registration done image upload pending,
+    lguserstatus		       varchar(2) NOT NULL, --> (S-Signup complted, Y - KYC NON COMPLIANT, R-Registration in progress, U-Registration done image upload pending,
                                                     --> P - Registration and upload done waiting to be active, A- Active, B-Blocked , I-Deleteduser)
     lguserkycstatus            varchar(1) NOT NULL DEFAULT 'N',    
     lguseripaddress            varchar(25),
@@ -91,7 +96,7 @@ CREATE TABLE webapp.userlogin (
 
 create table webapp.notifimaster(
     nfmid               varchar(20) NOT NULL CONSTRAINT nfmid PRIMARY KEY , 
-    nfname				varchar(30) NOT NULL,   --- this is can't unique as this will have entries for multiple users with same status
+    nfname				varchar(30) NOT NULL,   --- pendingkyc, pendingregistration
     nfmuserid 		    varchar(100),
     nfmscreenid			varchar(10),
     nfmessage			varchar(1000) NOT NULL,
@@ -108,6 +113,8 @@ create table webapp.notifimaster(
 	nfmentityid          varchar(10) NOT NULL
 )
 
+ALTER TABLE webapp.notifimaster
+ADD CONSTRAINT notimastuniq UNIQUE (nfname, nfmuserid, nfmentityid)
 
 --Notification for loged in users table
 
@@ -535,8 +542,8 @@ CREATE TABLE webapp.pfmaindetail (
     ororpfuserid 			    varchar(40) NOT NULL,
     orormffundname              varchar(100) NOT NULL,
     orormffndcode               varchar(100) NOT NULL, 
-    ororfndamcnatcode           varchar(10) NOT NULL REFERENCES webapp.amcmaster(amcnatcode),
-    orormfprodtype              varchar(5) NOT NULL,       --> MF,EQ,IN
+    ororfndamcnatcode           varchar(10) REFERENCES webapp.amcmaster(amcnatcode),
+    orormfprodtype              varchar(5) NOT NULL,       --> BSEMF,EQ,IN,SGB
     orormftrantype              varchar(5) NOT NULL,     --> New(N),Mod(M),Cxl(C)
     orormfwhattran              varchar(5) NOT NULL,     --> Pur (PU),Redem (RE) ,SwiOut(SO) ,SwiIn (SI)
     ormffundordelstrtyp         varchar(10) NOT NULL,
@@ -547,7 +554,11 @@ CREATE TABLE webapp.pfmaindetail (
 	ormfsipendt                 date,
 	ormfsipdthold               text,
     ormfselctedsip              text,    
-    ormffndstatus               varchar(10) NOT NULL, --new - Not executed, INCART - added to order basket, SUBM - Submitted, inprogress -SIP order placment inprogress or cancel in progress, cancel (if > mininst),cancled,completed(expired for SIP)
+    ormffndstatus               varchar(10) NOT NULL, --1) new - Not executed, INCART - added to order basket, SUBM - Submitted, 
+                                                      --2a) onetime --> PAYPROG- Payment progress, PENDALOC - Pending allocation, 
+                                                      --2b) sip --> -NA-
+                                                      --3)COMPS - Sucessful, COMPF - Failure. 
+                                                      --inprogress -SIP order placment inprogress or cancel in progress, cancel (if > mininst),cancled,completed(expired for SIP)
     ormfordererr                varchar(1000),
     ormfoctime			        timestamptz NOT NULL,
     ormflmtime      			timestamptz NOT NULL,
@@ -568,15 +579,19 @@ CREATE TABLE webapp.pfmaindetail (
     mfor_uniquereferencenumber   varchar(19) NOT NULL DEFAULT '10' || TO_CHAR(CURRENT_TIMESTAMP,'DDMMYYYY')||cast((nextval('webapp."mfor_id_seq"')) AS TEXT) CONSTRAINT mfor_unq_ref PRIMARY KEY, 
                                  --> <PROUDCT (2digit, 10-MF,20-EQ, 30-IN)><DDMMYYYY(8digit)><sequence(9digit)>
     mfor_pfuserid 			     varchar(40) NOT NULL,
-    mfor_prodcuttype             varchar(3)  NOT NULL, --> MF-mutual fund, EQ-stock, IN-insurance
+    mfor_producttype             varchar(5)  NOT NULL, --> BSEMF-mutual fund, EQ-stock, IN-insurance, SGB
     mfor_orormfpflistid          varchar(50) NOT NULL REFERENCES webapp.pfmforlist(orormfpflistid),
     mfor_ororportfolioid         varchar(50) NOT NULL REFERENCES webapp.pfmaindetail(pfportfolioid),
     mfor_transactioncode         varchar(3) NOT NULL,    -->  Allowed values (onetime -> NEW/MOD/CXL : <all>SIP -> NEW/CXL  : OVERNIGHT-> NEW/CXL : SWITCH-> NEW/CXL )
-    mfor_ordertype               varchar(10) NOT NULL,   -->  ONE-TIME,SIP,XSIP,ISIP,ESIP/OVERNIGHT/SWITCH
+    mfor_ordertype               varchar(10) NOT NULL,   -->  ONE-TIME,SIP,OVERNIGHT/SWITCH,ISIPTRAN,XSIPTRAN,ESIPTRAN
     mfor_buysell                 varchar(2) NOT NULL,    -->  P/R/SO/SI (Pruchar/Redemption/switchout/switchin)
     mfor_buyselltype             varchar(10),   -->  FRESH/ADDITIONAL
-    mfor_orderid                 varchar(8),
-    mfor_orderstatus             varchar(10),            -->  processnotstarted(PNS), (VAS VAF) Validation succ or failure ,inprocess for sip (INP),pendpay for one (PPY) ,paycomp, processed, failed (FAI)
+    mfor_orderid                 varchar(8),    --> order id for one time, 
+    mfor_orderstatus             varchar(10),            -->  processnotstarted(PNS), (VAS VAF) Validation succ or failure ,pendpay for pay (PPY) ,BSE val failed (FAI), PPY - Pending Payment, PPP -record taken for payment processing,
+                                                         -->  PPP to Orderpaystatus api resp --> PER - for all 101 resp, (100 PAYMENT NOT INITIATED...) No action, PAW - Awaiting fnd conf, PAP - Payment approved, PRJ - Payment rejected
+                                                         -->  RTA - payment done, CAC - Order cancelled, ALT - Allotment done to check further, ALC - Allotment confirmed (units are updated)
+                                                         --> from paycomp, processed, mforder.py--> fetchsucfai_recs
+                                                         --> SIP from PNS -> VAS/VAF; VAS -> SRS
     mfor_transmode               varchar(2) NOT NULL,     --> D/P   check if this field is mandatory
     mfor_dptxn                   varchar(10) NOT NULL,    --> C/N/P  (CDSL/NSDL/PHYSICAL)
     mfor_userid                  integer,
@@ -605,9 +620,10 @@ CREATE TABLE webapp.pfmaindetail (
     mfor_frequencyallowed        smallint DEFAULT 1,
     mfor_numofinstallment        smallint,
     mfor_firstorderflg           varchar(1),
-    mfor_sipregid                varchar(10),
+    mfor_sipregid                varchar(20),
     mfor_brokerage               numeric(19,2),
-    mfor_sipmandateid            varchar(15),              --> xsipmandateid varchar(8),  isipmandateid  varchar(15)
+    mfor_sipmandateid            varchar(15),            --> xsipmandateid varchar(8),  isipmandateid  varchar(15)
+    mfor_sipmandatetype          varchar(1),          --> X / I /E (XSIP/ISIP/ E-Mandate)
     mfor_valierrors              text,
     mfor_bseremarks              text,
     mfor_msgjson                 json,
@@ -617,24 +633,125 @@ CREATE TABLE webapp.pfmaindetail (
     );
     
     
+
+    
+    CREATE TABLE webapp.mfmandatdetails(
+    man_internalid              varchar(25) NOT NULL CONSTRAINT man_unq_ref PRIMARY KEY, 
+    man_pfuserid 			    varchar(40) NOT NULL REFERENCES webapp.userlogin(lguserid),
+    man_clientcode              varchar(20) NOT NULL REFERENCES webapp.userlogin(lgclientcode),
+    man_memberid                varchar(20) NOT NULL REFERENCES webapp.userlogin(lgmembercode),
+    man_bsemandateid            varchcar(40),
+    man_registdate              timestamptz NOT NULL,
+    man_approveddate            date,
+    man_amount                  numeric(19,2) NOT NULL,
+    man_mandatetype             varchar(1) NOT NULL,          --> X / I /E (XSIP/ISIP/ E-Mandate)
+    man_collectiontype          varchar(50),
+    man_accno                   varchar(16) NOT NULL,
+    man_acctype                 varchar(2) NOT NULL,          --> SB/CB/NE/NO 
+    man_ifsc                    varchar(11)  NOT NULL,
+    man_micr                    varchar(9),
+    man_bankname                varchar(200),                              -- Use only in case IFSC is blank
+    man_bankbranch              varchar(200),                              -- Use only in case IFSC is blank
+    man_bseremarks              text,
+    man_startdate               date NOT NULL,
+    man_enddate                 date NOT NULL,
+    man_status                  varchar(100) NOT NULL,
+    man_umrnnum                 varchar(40),
+    man_octime		            timestamptz NOT NULL,
+    man_lmtime             	    timestamptz NOT NULL,
+    man_entityid                varchar(10) NOT NULL
+    )    
     
     
-    ---Table that stores the folio id for the funds under AMC IN a portfolio
+    webapp.mfmandateutildet(
+    manu_internalid              varchar(25) NOT NULL REFERENCES webapp.mfmandatdetails(man_internalid), 
+    manu_date                   numeric(2) NOT NULL,
+    manu_utilamt                numeric(19,2) NOT NULL,
+    manu_octime		            timestamptz NOT NULL,
+    manu_lmtime             	    timestamptz NOT NULL,
+    manu_entityid                varchar(10) NOT NULL
+
+    )
     
-          
-    CREATE TABLE webapp.mffoliodetails(
-    fopfportfolioid        varchar(50) REFERENCES webapp.pfmaindetail(pfportfolioid),	
-    foamcnatcode           varchar(10) REFERENCES webapp.amcmaster(amcnatcode),
-    fopfamcfolionumber       varchar(50) NOT NULL,
-    foorderoctime		   timestamptz NOT NULL,
-    foorderlmtime      	   timestamptz NOT NULL,
-    foentityid               varchar(10) NOT NULL
+    CREATE TABLE webapp.bsebankcodes(
+    bsebk_mode              varchar(6) NOT NULL,
+    bsebk_bankname          varchar(80) NOT NULL,
+    bsebk_bank              varchar(80) REFERENCES webapp.BANKIFSCMASTER(bank),
+    bsebk_bankcode          varchar(5) NOT NULL,
+    bsebk_octime		    timestamptz NOT NULL,
+    bsebk_lmtime            timestamptz NOT NULL,
+    bsebk_entityid          varchar(10) NOT NULL
     )
     
     
     
+      
+      ------ create a sequence (this is to be reset at 00:00 hrs every day, Lambda function to be written for reset)
+              CREATE SEQUENCE webapp.tran_id_seq 
+              START 1
+              increment 1
+              MAXVALUE 999999999;
     
-    
+    CREATE TABLE webapp.trandetails(
+    tran_id                       varchar(19) NOT NULL DEFAULT 'TO_CHAR(CURRENT_TIMESTAMP,'DDMMYYYY')||cast((nextval('webapp."tran_id_seq"')) AS TEXT) CONSTRAINT tran_unq_ref PRIMARY KEY,
+    tran_orderdate                date NOT NULL,   ---> This is the date that impact entry in dailyposition date (backvalue dt????)
+    tran_uniquereferencenumber    varchar(19) NOT NULL REFERENCES webapp.mforderdetails(mfor_uniquereferencenumber),
+    tran_orderid                  varchar(8)  NOT NULL REFERENCES webapp.mforderdetails(mfor_orderid),
+    tran_producttype              varchar(5)  NOT NULL, --> BSEMF-mutual fund, EQ-stock, IN-insurance, SGBtran
+    tran_ordertype                varchar(10) NOT NULL, --> ONETIME,SIPTRAN,OVERNIGHT,SWITCH
+    tran_ordersubtyp              varchar(10)           --> --,[SIPTRAN - XSIP,ISIP,ESIP],--,--,
+    tran_pfuserid 			      varchar(40) NOT NULL,
+    tran_amt                      numeric(19,2) NOT NULL,
+    tran_nav                      numeric(19,4) NOT NULL,
+    tran_unit                     numeric(19,2) NOT NULL,
+    tran_invamount                numeric(19,2) NOT NULL,
+    tran_buysell                  varchar(2) NOT NULL,    -->  P/R/SO/SI (Pruchar/Redemption/switchout/switchin)
+    tran_remarks                  text,
+    tran_sipregnno                varchar(20), 
+    tran_beneficiaryid            varchar(16), 
+    tran_dptxn                    varchar(10) NOT NULL,    --> C/N/P  (CDSL/NSDL/PHYSICAL)
+    tran_foliono                  text NOT NULL,
+    tran_userid                   integer NOT NULL,
+    tran_memberid                 varchar(20) NOT NULL,
+    tran_clientcode               varchar(20) NOT NULL,
+    tran_schemecd                 varchar(20) NOT NULL,
+    tran_schmname                 text NOT NULL,
+    tran_settno                   varchar(14),
+    tran_setttype                 varchar(2),
+    tran_dailypositionflg         varchar(1) NOT NULL,  Y-added to webapp.dailyposition, N- Not yet added
+    tran_octime	                  timestamptz NOT NULL,
+    tran_lmtime                   timestamptz NOT NULL,
+	tran_entityid                 varchar(10) NOT NULL
+	)
+
+	
+	CREATE TABLE webapp.dailyposition(
+	dpso_date                     date NOT NULL,
+	dpos_schemecd                 varchar(20) NOT NULL,	
+	dpos_schmname                 text NOT NULL,
+	dpos_invamount                numeric(19,2) NOT NULL,
+    dpos_unit                     numeric(19,2) NOT NULL,
+	dpos_avgnav                   numeric(19,4) NOT NULL,
+	dpos_curnav                   numeric(19,4) NOT NULL,
+	dpos_curvalue                 numeric(19,2) NOT NULL,
+	dpos_totalpnl                 numeric(19,2) NOT NULL,
+    dpos_pfportfolioid            varchar(50) REFERENCES webapp.pfmaindetail(pfportfolioid),
+    dpos_producttype              varchar(5)  NOT NULL, --> BSEMF-mutual fund, EQ-stock, IN-insurance, SGBtran
+    dpos_octime	                  timestamptz NOT NULL,
+    dpos_lmtime                   timestamptz NOT NULL,
+	dpos_entityid                 varchar(10) NOT NULL
+	)
+	
+	
+	    ---Table that stores the folio id for the funds under AMC IN a portfolio          
+    CREATE TABLE webapp.mffoliodetails(
+    fopfportfolioid        varchar(50) REFERENCES webapp.pfmaindetail(pfportfolioid),	
+    foamcnatcode           varchar(10) REFERENCES webapp.amcmaster(amcnatcode),
+    fopfamcfolionumber     varchar(50) NOT NULL,
+    foorderoctime		   timestamptz NOT NULL,
+    foorderlmtime      	   timestamptz NOT NULL,
+    foentityid             varchar(10) NOT NULL
+    )
     
     SELECT clientcode FROM webapp.uccclientmaster WHERE ucclguserid = %s AND uccentityid = %s,(userid,entityid,)
 SELECT lguserkycstatus FROM webapp.userlogin WHERE lguserid = %s AND lgentityid = %s,(userid,entityid,)
