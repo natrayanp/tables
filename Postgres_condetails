@@ -1,7 +1,8 @@
 Initial container creation:
 docker run -d --name my_postgres1 -e POSTGRES_PASSWORD=mysecretpassword -p 5432:5432 -v pg-data:/home/natrayan/project/AwsProject/databases/postrgreslk postgres:alpine
 
-
+ firebase - 4.13.1
+ 
 Current run
 sudo systemctl start docker
 
@@ -13,6 +14,12 @@ docker run -v pg-data:/home/natrayan/project/AwsProject/databases/postrgreslk -p
 #### first time run ####
 docker start postgres-test
 docker run -v pgadmin4:/home/pgadmin/.pgadmin -p 80:80 --link postgres-test:postgres-test -e 'PGADMIN_DEFAULT_EMAIL=user@domain.com' -e 'PGADMIN_DEFAULT_PASSWORD=SuperSecret' --rm dpage/pgadmin4
+docker run -v pgadmin4:/home/pgadmin/.pgadmin -p 5050:5050 --link postgres-test:postgres-test -e 'PGADMIN_DEFAULT_EMAIL=user@domain.com' -e 'PGADMIN_DEFAULT_PASSWORD=SuperSecret' --rm fenglc/pgadmin4
+
+
+
+CREATE USER guacamole_user WITH PASSWORD 'pass123';
+
 
 http://localhost:80
 In pagadmin4
