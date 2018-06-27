@@ -697,6 +697,7 @@ CREATE TABLE webapp.pfmaindetail (
     tran_orderdate                date NOT NULL,   ---> This is the date that impact entry in dailyposition date (backvalue dt????)
     tran_uniquereferencenumber    varchar(19) NOT NULL REFERENCES webapp.mforderdetails(mfor_uniquereferencenumber),
     tran_orderid                  varchar(8)  NOT NULL REFERENCES webapp.mforderdetails(mfor_orderid),
+    tran_portfolioid         varchar(50) NOT NULL REFERENCES webapp.pfmaindetail(pfportfolioid),
     tran_producttype              varchar(5)  NOT NULL, --> BSEMF-mutual fund, EQ-stock, IN-insurance, SGBtran
     tran_ordertype                varchar(10) NOT NULL, --> ONETIME,SIPTRAN,OVERNIGHT,SWITCH
     tran_ordersubtyp              varchar(10)           --> --,[SIPTRAN - XSIP,ISIP,ESIP],--,--,
