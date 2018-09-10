@@ -1,6 +1,3 @@
-Initial container creation:
-docker run -d --name my_postgres1 -e POSTGRES_PASSWORD=mysecretpassword -p 5432:5432 -v pg-data:/home/natrayan/project/AwsProject/databases/postrgreslk postgres:alpine
-
  firebase - 4.13.1
  
 Current run
@@ -11,12 +8,14 @@ sudo systemctl start docker
 #to connect to postgres using pgadmin4
 #### first time run ####
 docker run -v pg-data:/home/natrayan/project/AwsProject/databases/postrgreslk -p 5432:5432 --name postgres-test -e POSTGRES_PASSWORD=password123 -d postgres
+docker run -v pg-data:/home/natrayan/project/AwsProject/databases/pg10 -p 5433:5432 --name postgres-10 -e POSTGRES_PASSWORD=password123 -d postgres:10.4
+
 #### first time run ####
-docker start postgres-test
+docker start postgres-10
 docker run -v pgadmin4:/home/pgadmin/.pgadmin -p 80:80 --link postgres-test:postgres-test -e 'PGADMIN_DEFAULT_EMAIL=user@domain.com' -e 'PGADMIN_DEFAULT_PASSWORD=SuperSecret' --rm dpage/pgadmin4
-docker run -v pgadmin4:/home/pgadmin/.pgadmin -p 5050:5050 --link postgres-test:postgres-test -e 'PGADMIN_DEFAULT_EMAIL=user@domain.com' -e 'PGADMIN_DEFAULT_PASSWORD=SuperSecret' --rm fenglc/pgadmin4
 
-
+docker run -v pgadmin4:/home/pgadmin/.pgadmin -p 8083:80 --name pg10-pgadm --link postgres-test:postgres-test --link postgres-test:postgres-test -e 'PGADMIN_DEFAULT_EMAIL=user@domain.com' -e 'PGADMIN_DEFAULT_PASSWORD=SuperSecret' --rm dpage/pgadmin4
+docker run -v pgadmin4:/home/pgadmin/.pgadmin -p 5050:5050 --link postgres-test:postgres-test  -e 'PGADMIN_DEFAULT_EMAIL=user@domain.com' -e 'PGADMIN_DEFAULT_PASSWORD=SuperSecret' --rm fenglc/pgadmin4
 
 CREATE USER guacamole_user WITH PASSWORD 'pass123';
 
@@ -116,6 +115,16 @@ VALUES ('BfulXOzj3ibSPSBDVgzMEAF1gax1','ABCDE6789Z',NULL,'natrayan p','2018-01-1
 INSERT INTO fatcamaster
 (fatcalguserid,pan_rp,pekrn,inv_name,dob,fr_name,sp_name,tax_status,data_src,addr_type,po_bir_inc,co_bir_inc,tax_res1,tpin1,id1_type,tax_res2,tpin2,id2_type,tax_res3,tpin3,id3_type,tax_res4,tpin4,id4_type,srce_wealt,corp_servs,inc_slab,net_worth,nw_date,pep_flag,occ_code,occ_type,exemp_code,ffi_drnfe,giin_no,spr_entity,giin_na,giin_exemc,nffe_catg,act_nfe_sc,nature_bus,rel_listed,exch_name,ubo_appl,ubo_count,ubo_name,ubo_pan,ubo_nation,ubo_add1,ubo_add2,ubo_add3,ubo_city,ubo_pin,ubo_state,ubo_cntry,ubo_add_ty,ubo_ctr,ubo_tin,ubo_id_ty,ubo_cob,ubo_dob,ubo_gender,ubo_fr_nam,ubo_occ,ubo_occ_ty,ubo_tel,ubo_mobile,ubo_code,ubo_hol_pc,sdf_flag,ubo_df,aadhaar_rp,new_change,log_name,filler1,filler2,fatcaoctime,fatcalmtime,fatcaentityid)
 VALUES ('nrTBkWVPjjXJbKSrzmubcixjgIw1','ayurn4896n',NULL,'ananthi k',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2018-01-27 14:33:01.090032','2018-01-27 14:33:01.090032','IN')
+
+
+
+INSERT INTO webapp.trandetails 
+(tran_orderdate,tran_uniquereferencenumber,tran_orderid,tran_producttype,tran_ordertype,tran_ordersubtyp,tran_pfuserid,tran_pfportfolioid,tran_amt,tran_nav,tran_unit,tran_invamount,tran_buysell,tran_remarks,tran_sipregnno,tran_beneficiaryid,tran_dptxn,tran_foliono,tran_userid,tran_memberid,tran_clientcode,tran_schemecd,tran_schmname,tran_settno,tran_setttype,tran_dailypositionflg,tran_octime,tran_lmtime,tran_entityid)
+VALUES('18-Jun-2018','10270520181412','1156084','BSEMF','ONETIME','','BfulXOzj3ibSPSBDVgzMEAF1gax1','BfulXOzj3ibSPSBDVgzMEAF1gax11',6000.00,600.0000,10,6000.00,'P','','','','P','F01','1713201','MEMBERID','A000000001','UTIMNC-GR','BIRLA MNC','','','N',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,'IN')
+
+
+
+
 
 
 
